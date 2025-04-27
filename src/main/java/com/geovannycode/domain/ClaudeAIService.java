@@ -3,20 +3,43 @@ package com.geovannycode.domain;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.stereotype.Service;
-//import org.springframework.ai.anthropic.AnthropicChatClient;
+import org.springframework.ai.anthropic.AnthropicChatModel;
 
 @Service
 public class ClaudeAIService {
-  //  private final AnthropicChatClient anthropicChatClient;
+    private final AnthropicChatModel anthropicChatModel;
 
-    public ClaudeAIService(/*AnthropicChatClient anthropicChatClient*/) {
-    //    this.anthropicChatClient = anthropicChatClient;
+    public ClaudeAIService(AnthropicChatModel anthropicChatModel) {
+        this.anthropicChatModel = anthropicChatModel;
     }
 
     public String chatWithClaude(String message) {
+
         Prompt prompt = new Prompt(message);
-        //ChatResponse response = anthropicChatClient.call(prompt);
-        //return response.getResult().getOutput().getContent();
-        return "";
+        ChatResponse response = anthropicChatModel.call(prompt);
+
+        String rawResponse = response.getResult().getOutput().toString();
+
+        return cleanResponse(rawResponse);
+    }
+
+    private String cleanResponse(String rawResponse) {
+        String cleanedResponse = rawResponse;
+
+        if (cleanedResponse.contains("AssistantMessage")) {
+            int contentStart = cleanedResponse.indexOf("textContent=");
+            if (contentStart >= 0) {
+                cleanedResponse = cleanedResponse.substring(contentStart + 12);
+            }
+        }
+
+        if (cleanedResponse.contains("metadata=")) {
+            int metadataIndex = cleanedResponse.lastIndexOf(", metadata=");
+            if (metadataIndex >= 0) {
+                cleanedResponse = cleanedResponse.substring(0, metadataIndex);
+            }
+        }
+
+        return cleanedResponse;
     }
 }
